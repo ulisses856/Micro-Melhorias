@@ -1,0 +1,25 @@
+Playbook Ansible para criar usuário com senha
+
+1. Playbook criar_usuario.yml
+---
+- name: Criar usuário em servidores Ubuntu
+  hosts: servidores_ubuntu
+  become: yes
+  tasks:
+    - name: Criar usuário com senha
+      ansible.builtin.user:
+        name: exemplo_user
+        comment: "Usuário criado via Ansible"
+        shell: /bin/bash
+        password: "{{ 'MinhaSenhaSegura123' | password_hash('sha512') }}"
+        state: present
+
+2. Configure seu inventory (hosts.ini) com os servidores Ubuntu:
+
+[servidores_ubuntu]
+192.168.1.10
+192.168.1.11
+
+3. Execute o playbook:
+
+ansible-playbook -i hosts.ini criar_usuario.yml
