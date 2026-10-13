@@ -1,0 +1,66 @@
+Aqui está um playbook Ansible simples e direto para instalar o PyMOL via apt em várias máquinas Ubuntu:
+
+1. playbook instalar_pymol.yml
+
+---
+- name: Instalar PyMOL em múltiplos servidores Ubuntu
+  hosts: servidores
+  become: yes
+  tasks:
+    - name: Atualizar lista de pacotes
+      ansible.builtin.apt:
+        update_cache: yes
+
+    - name: Instalar PyMOL
+      ansible.builtin.apt:
+        name: pymol
+        state: present
+
+    - name: Verificar instalação do PyMOL
+      ansible.builtin.command: pymol -c
+      register: pymol_result
+      ignore_errors: yes
+
+    - name: Mostrar status da instalação
+      ansible.builtin.debug:
+        msg: "PyMOL instalado e acessível: {{ pymol_result.stdout }}"
+
+2. Como funciona:
+
+hosts: servidores → refere-se ao grupo de máquinas definido no seu inventário Ansible.
+
+become: yes → executa as tarefas como superusuário (root).
+
+apt update → garante que a lista de pacotes esteja atualizada.
+
+apt install pymol → instala o PyMOL globalmente para todos os usuários.
+
+command pymol -c → testa a execução do PyMOL em modo console.
+
+debug → mostra o resultado da instalação.
+
+3. Execução
+
+Salve o arquivo como instalar_pymol.yml e rode:
+
+ansible-playbook -i hosts instalar_pymol.yml
+
+4. Arquivo hosts.ini 
+
+[servidores]
+192.168.1.10 ansible_user=ubuntu ansible_ssh_private_key_file=~/.ssh/id_rsa
+192.168.1.11 ansible_user=ubuntu ansible_ssh_private_key_file=~/.ssh/id_rsa
+192.168.1.12 ansible_user=ubuntu ansible_ssh_private_key_file=~/.ssh/id_rsa
+
+5. Explicação:
+
+[servidores] → nome do grupo de máquinas (deve coincidir com o hosts: servidores do playbook).
+
+192.168.1.10, 192.168.1.11, etc. → IPs ou nomes DNS das máquinas Ubuntu.
+
+ansible_user=ubuntu → usuário usado para conectar via SSH.
+
+ansible_ssh_private_key_file=~/.ssh/id_rsa → chave privada usada para autenticação SSH.
+
+
+
