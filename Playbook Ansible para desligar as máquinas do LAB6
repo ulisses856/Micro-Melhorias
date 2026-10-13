@@ -1,0 +1,104 @@
+1. Criar o inventário
+Crie o arquivo inventory.ini:
+
+ini
+[labgen]
+labgen[01:21]
+
+[labgen:vars]
+ansible_user=helpncc
+ansible_become=true
+ansible_become_method=sudo
+
+2. Criar o playbook de desligamento
+Crie o arquivo shutdown_labgen.yml:
+
+yaml
+
+---
+- name: Desligar servidores labgen01 a labgen21
+  hosts: labgen
+  gather_facts: false
+  become: true
+
+  tasks:
+    - name: Verificar conectividade com os servidores
+      ansible.builtin.ping:
+
+    - name: Desligar os servidores
+      ansible.builtin.command:
+        argv:
+          - /usr/sbin/shutdown
+          - -h
+          - now
+      async: 1
+      poll: 0
+Como funciona:
+
+hosts: labgen: seleciona os 21 servidores do inventário.
+
+become: true: executa o comando com privilégios administrativos.
+
+ping: verifica a conectividade Ansible antes do desligamento.
+
+shutdown -h now: solicita o desligamento imediato do sistema.
+
+async: 1 e poll: 0: evita que o Ansible fique aguardando a conexão SSH depois que a máquina começar a desligar.
+
+Atenção: a tarefa de conectividade não impede automaticamente o desligamento dos demais hosts se algum deles falhar. Para uma operação com validação global antes do desligamento, veja a alternativa abaixo.
+
+3. Executar uma validação antes de desligar
+Teste a conectividade com todos os hosts:
+
+bash
+ansible -i inventory.ini labgen -m ansible.builtin.ping
+Confira a lista de máquinas que serão afetadas:
+
+bash
+ansible-inventory -i inventory.ini --list
+Depois de confirmar que os 21 hosts estão corretos, execute o playbook:
+
+bash
+ansible-playbook -i inventory.ini shutdown_labgen.yml --ask-become-pass
+Use --ask-become-pass se o sudo exigir senha. Se o usuário tiver sudo sem senha, esse parâmetro não será necessário.
+
+4. Alternativa recomendada: validar todos antes de desligar
+Para evitar iniciar o desligamento caso algum servidor esteja inacessível, separe a validação em um play e o desligamento em outro:
+
+yaml
+
+---
+- name: Validar todos os servidores labgen
+  hosts: labgen
+  gather_facts: false
+  tasks:
+    - name: Verificar conectividade
+      ansible.builtin.ping:
+      register: ping_result
+      ignore_errors: true
+
+    - name: Interromper se algum host falhar
+      ansible.builtin.fail:
+        msg: "Validação falhou. Nenhum servidor será desligado."
+      when: ping_result is failed
+
+- name: Desligar servidores labgen
+  hosts: labgen
+  gather_facts: false
+  become: true
+  tasks:
+    - name: Desligar o Ubuntu
+      ansible.builtin.command:
+        argv:
+          - /usr/sbin/shutdown
+          - -h
+          - now
+      async: 1
+      poll: 0
+Salve essa versão, por exemplo, como shutdown_labgen_validated.yml, e execute:
+
+bash
+ansible-playbook -i inventory.ini shutdown_labgen_validated.yml --ask-become-pass
+Essa versão interrompe a execução antes do segundo play se a validação de algum host falhar. Ela pressupõe que os nomes do inventário correspondam às máquinas corretas e que o acesso SSH esteja configurado.
+
+Recomendação operacional: antes da execução real, confira os hosts com ansible-inventory e valide o acesso SSH. O desligamento é imediato e pode interromper serviços ou tarefas em andamento.
