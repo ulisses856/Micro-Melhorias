@@ -3,7 +3,29 @@ Crie o arquivo inventory.ini:
 
 ini
 [labgen]
-labgen[01:21]
+#labgen[01:21]
+labgen01 ansible_host=146.134.242.161 ansible_user=helplncc
+labgen02 ansible_host=146.134.242.162 ansible_user=helplncc
+labgen03 ansible_host=146.134.242.163 ansible_user=helplncc
+labgen04 ansible_host=146.134.242.164 ansible_user=helplncc
+labgen05 ansible_host=146.134.242.165 ansible_user=helplncc
+labgen06 ansible_host=146.134.242.166 ansible_user=helplncc
+labgen07 ansible_host=146.134.242.167 ansible_user=helplncc
+labgen08 ansible_host=146.134.242.168 ansible_user=helplncc
+labgen09 ansible_host=146.134.242.169 ansible_user=helplncc
+labgen10 ansible_host=146.134.242.170 ansible_user=helplncc
+labgen11 ansible_host=146.134.242.171 ansible_user=helplncc
+labgen12 ansible_host=146.134.242.172 ansible_user=helplncc
+labgen13 ansible_host=146.134.242.173 ansible_user=helplncc
+labgen14 ansible_host=146.134.242.174 ansible_user=helplncc
+labgen15 ansible_host=146.134.242.175 ansible_user=helplncc
+labgen16 ansible_host=146.134.242.176 ansible_user=helplncc
+labgen17 ansible_host=146.134.242.177 ansible_user=helplncc
+labgen18 ansible_host=146.134.242.178 ansible_user=helplncc
+labgen19 ansible_host=146.134.242.179 ansible_user=helplncc
+labgen20 ansible_host=146.134.242.180 ansible_user=helplncc
+labgen21 ansible_host=146.134.242.181 ansible_user=helplncc
+
 
 [labgen:vars]
 ansible_user=helpncc
@@ -11,21 +33,22 @@ ansible_become=true
 ansible_become_method=sudo
 
 2. Criar o playbook de desligamento
-Crie o arquivo shutdown_labgen.yml:
+Crie o arquivo shutdown_lab6.yml:
 
 yaml
 
 ---
-- name: Desligar servidores labgen01 a labgen21
-  hosts: labgen
+- name: Desligar máquinas do lab6
+  hosts: lab6
   gather_facts: false
   become: true
 
   tasks:
-    - name: Verificar conectividade com os servidores
+    - name: Verificar conectividade com as máquinas
       ansible.builtin.ping:
+      register: ping_result
 
-    - name: Desligar os servidores
+    - name: Desligar as máquinas
       ansible.builtin.command:
         argv:
           - /usr/sbin/shutdown
@@ -33,6 +56,11 @@ yaml
           - now
       async: 1
       poll: 0
+      when: ping_result is succeeded
+
+
+
+***********************************************************************
 Como funciona:
 
 hosts: labgen: seleciona os 21 servidores do inventário.
@@ -95,10 +123,10 @@ yaml
           - now
       async: 1
       poll: 0
-Salve essa versão, por exemplo, como shutdown_labgen_validated.yml, e execute:
+Salve essa versão, por exemplo, como shutdown_lab6.yml, e execute:
 
 bash
-ansible-playbook -i inventory.ini shutdown_labgen_validated.yml --ask-become-pass
+ansible-playbook -i inventory.ini shutdown_lab6.yml --ask-become-pass
 Essa versão interrompe a execução antes do segundo play se a validação de algum host falhar. Ela pressupõe que os nomes do inventário correspondam às máquinas corretas e que o acesso SSH esteja configurado.
 
 Recomendação operacional: antes da execução real, confira os hosts com ansible-inventory e valide o acesso SSH. O desligamento é imediato e pode interromper serviços ou tarefas em andamento.
