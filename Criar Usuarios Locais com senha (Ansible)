@@ -15,7 +15,7 @@ Playbook Ansible para criar usuário com senha
         state: present
 
 
-2. Configure seu inventory (hosts.ini) com os servidores Ubuntu:
+2. Configure seu inventory (hosts_6.ini) com os servidores Ubuntu:
 [lab6]
 labgen01 ansible_host=146.134.242.161 ansible_user=helplncc
 labgen02 ansible_host=146.134.242.162 ansible_user=helplncc
