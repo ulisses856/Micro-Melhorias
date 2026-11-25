@@ -1,0 +1,136 @@
+Arquivo instalar_software
+
+---
+- name: Instalar softwares em múltiplas máquinas Ubuntu
+  hosts: lab6
+  become: true
+  gather_facts: true
+
+  vars:
+    softwares_obrigatorios:
+      - pymol
+      - git
+      - curl
+      - wget
+      - vim
+      - nano
+      - htop
+      - tree
+      - unzip
+      - zip
+      - build-essential
+      - python3
+      - python3-pip
+      - python3-venv
+      - pipx
+      - cmake
+      - gcc
+      - g++
+      - make
+      - default-jdk
+      - r-base
+
+    softwares_opcionais:
+      - ncbi-blast+
+      - hmmer
+      - mafft
+      - muscle
+      - clustalo
+
+  tasks:
+    - name: Verificar sistema operacional
+      ansible.builtin.assert:
+        that:
+          - ansible_facts['distribution'] == 'Ubuntu'
+        fail_msg: "Sistema operacional não suportado."
+
+    - name: Atualizar lista de pacotes
+      ansible.builtin.apt:
+        update_cache: true
+        cache_valid_time: 3600
+
+    - name: Atualizar pacotes instalados
+      ansible.builtin.apt:
+        upgrade: safe
+
+    - name: Instalar softwares obrigatórios
+      ansible.builtin.apt:
+        name: "{{ softwares_obrigatorios }}"
+        state: present
+
+    - name: Verificar disponibilidade dos softwares opcionais
+      ansible.builtin.command:
+        cmd: "apt-cache show {{ item }}"
+      loop: "{{ softwares_opcionais }}"
+      register: disponibilidade
+      changed_when: false
+      failed_when: false
+
+    - name: Instalar softwares opcionais disponíveis
+      ansible.builtin.apt:
+        name: "{{ item.item }}"
+        state: present
+      loop: "{{ disponibilidade.results }}"
+      when: item.rc == 0
+
+    - name: Verificar Python
+      ansible.builtin.command:
+        cmd: python3 --version
+      register: python_result
+      changed_when: false
+
+    - name: Verificar Git
+      ansible.builtin.command:
+        cmd: git --version
+      register: git_result
+      changed_when: false
+
+    - name: Verificar PyMOL
+      ansible.builtin.command:
+        cmd: pymol --help
+      register: pymol_result
+      changed_when: false
+      failed_when: false
+
+    - name: Relatório final
+      ansible.builtin.debug:
+        msg:
+          - "Máquina: {{ inventory_hostname }}"
+          - "Ubuntu: {{ ansible_facts['distribution_version'] }}"
+          - "Python: {{ python_result.stdout }}"
+          - "Git: {{ git_result.stdout }}"
+          - "PyMOL: {{ 'OK' if pymol_result.rc == 0 else 'Verificar' }}"
+          - "Instalação concluída."
+
+Arquivo inventory.ini
+
+
+[lab6]
+#labgen01 ansible_host=146.134.242.161 ansible_user=helplncc
+#labgen02 ansible_host=146.134.242.162 ansible_user=helplncc
+#labgen03 ansible_host=146.134.242.163 ansible_user=helplncc
+#labgen04 ansible_host=146.134.242.164 ansible_user=helplncc
+#labgen05 ansible_host=146.134.242.165 ansible_user=helplncc
+#labgen06 ansible_host=146.134.242.166 ansible_user=helplncc
+#labgen07 ansible_host=146.134.242.167 ansible_user=helplncc
+#labgen08 ansible_host=146.134.242.168 ansible_user=helplncc
+#labgen09 ansible_host=146.134.242.169 ansible_user=helplncc
+#labgen10 ansible_host=146.134.242.170 ansible_user=helplncc
+#labgen11 ansible_host=146.134.242.171 ansible_user=helplncc
+#labgen12 ansible_host=146.134.242.172 ansible_user=helplncc
+#labgen13 ansible_host=146.134.242.173 ansible_user=helplncc
+#labgen14 ansible_host=146.134.242.174 ansible_user=helplncc
+#labgen15 ansible_host=146.134.242.175 ansible_user=helplncc
+#labgen16 ansible_host=146.134.242.176 ansible_user=helplncc
+#labgen17 ansible_host=146.134.242.177 ansible_user=helplncc
+#labgen18 ansible_host=146.134.242.178 ansible_user=helplncc
+#labgen19 ansible_host=146.134.242.179 ansible_user=helplncc
+#labgen20 ansible_host=146.134.242.180 ansible_user=helplncc
+labgen21 ansible_host=146.134.242.181 ansible_user=helplncc
+
+[lab6:vars]
+ansible_user=helplncc
+ansible_become=true
+ansible_become_method=sudo
+ansible_python_interpreter=/usr/bin/python3
+
