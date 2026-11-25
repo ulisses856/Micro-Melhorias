@@ -1,0 +1,10 @@
+---
+- name: Excluir usuário em máquinas com sistema operacional Ubuntu
+  hosts: lab6
+  become: yes
+  tasks:
+    - name: Excluir usuário
+      ansible.builtin.user:
+        name: teste
+        state: absent
+        remove: yes
